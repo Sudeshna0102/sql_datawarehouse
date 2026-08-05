@@ -1,0 +1,157 @@
+/* 
+=====================================
+Stored Procedure for the Bronze Layer
+=====================================
+Purpose: The purpose of this stored procedure is to bulk insert data from external csv files, CRM and ERP. 
+The script truncates the tables if they exist and then bulk insert data into them.
+
+Usage:  EXEC Bronze.load_ini*/
+
+
+/*
+===============
+Bulk Inser Data
+=============== */
+
+--We will store the following segment in a stored procedure because 
+--they wil be frequently used
+
+CREATE OR ALTER PROCEDURE Bronze.load_ini AS
+BEGIN
+
+	DECLARE @start_time AS DATETIME, @end_time AS DATETIME, @start_batch_time AS DATETIME, @end_batch_time AS DATETIME
+
+
+	SET @start_batch_time = GETDATE();
+	BEGIN TRY
+			PRINT'===================================';
+			PRINT'Loading the Bronze Layer';
+			PRINT'===================================';
+
+			PRINT'-----------------------------------';
+			PRINT'Loading tables from source CRM';
+			PRINT'-----------------------------------';
+
+	
+	SET @start_time = GETDATE();
+			PRINT'>>>Truncating Table: Bronze.crm_cust_info';
+			TRUNCATE TABLE Bronze.crm_cust_info
+
+			PRINT'>>>Inserting Data Into Table: Bronze.crm_cust_info ';
+
+
+			BULK INSERT Bronze.crm_cust_info
+			FROM 'D:\Desktop_SD_new\SQL_Warehouse_Project\sql-data-warehouse-project-main\datasets\source_crm\cust_info.csv'
+			WITH (
+				FIRSTROW=2,
+				FIELDTERMINATOR= ',',
+				TABLOCK
+				)
+	SET @end_time = GETDATE();
+		PRINT'>>>Loading Duration:' +CAST(DATEDIFF(second,@start_time,@end_time)AS NVARCHAR) +'seconds';
+
+
+	SET @start_time = GETDATE();
+		PRINT'>>>Truncating Table: Bronze.crm_prd_info';
+
+			TRUNCATE TABLE Bronze.crm_prd_info
+
+		PRINT'>>>Inserting Data Into Table: Bronze.crm_prd_info';
+
+			BULK INSERT Bronze.crm_prd_info
+			FROM 'D:\Desktop_SD_new\SQL_Warehouse_Project\sql-data-warehouse-project-main\datasets\source_crm\prd_info.csv'
+			WITH (
+				FIRSTROW=2,
+				FIELDTERMINATOR= ',',
+				TABLOCK
+				)
+	SET @end_time = GETDATE();
+		PRINT'>>>Loading Duration:' +CAST(DATEDIFF(second,@start_time,@end_time)AS NVARCHAR) +'seconds';
+		
+	SET @start_time = GETDATE();
+		PRINT'>>>Truncating Table: Bronze.crm_sales_details';
+
+			TRUNCATE TABLE Bronze.crm_sales_details
+
+		PRINT'>>>Inserting Data Into Table: Bronze.crm_sales_details';
+
+			BULK INSERT Bronze.crm_sales_details
+			FROM 'D:\Desktop_SD_new\SQL_Warehouse_Project\sql-data-warehouse-project-main\datasets\source_crm\sales_details.csv'
+			WITH (
+				FIRSTROW=2,
+				FIELDTERMINATOR= ',',
+				TABLOCK
+				)
+	SET @end_time = GETDATE();
+		PRINT'>>>Loading Duration:' +CAST(DATEDIFF(second,@start_time,@end_time)AS NVARCHAR) +'seconds';
+
+
+		PRINT'-----------------------------------';
+		PRINT'Loading tables from source ERP';
+		PRINT'-----------------------------------';
+
+	SET @start_time = GETDATE();
+
+		PRINT'>>>Truncating Table: Bronze.erp_CUST_AZ12';
+
+			TRUNCATE TABLE Bronze.erp_CUST_AZ12
+
+		PRINT'>>>Inserting Data Into Table: Bronze.erp_CUST_AZ12';
+
+			BULK INSERT Bronze.erp_CUST_AZ12
+			FROM 'D:\Desktop_SD_new\SQL_Warehouse_Project\sql-data-warehouse-project-main\datasets\source_erp\CUST_AZ12.csv '
+			WITH (
+				FIRSTROW=2,
+				FIELDTERMINATOR= ',',
+				TABLOCK
+				)
+	SET @end_time = GETDATE();
+		PRINT'>>>Loading Duration:' +CAST(DATEDIFF(second,@start_time,@end_time)AS NVARCHAR) +'seconds';
+
+	SET @start_time = GETDATE();
+		PRINT'>>>Truncating Table: Bronze.erp_LOC_A101';
+
+			TRUNCATE TABLE Bronze.erp_LOC_A101
+
+		PRINT'>>>Inserting Data Into Table: Bronze.erp_LOC_A101';
+
+			BULK INSERT Bronze.erp_LOC_A101
+			FROM 'D:\Desktop_SD_new\SQL_Warehouse_Project\sql-data-warehouse-project-main\datasets\source_erp\LOC_A101.csv '
+			WITH (
+				FIRSTROW=2,
+				FIELDTERMINATOR= ',',
+				TABLOCK
+				)
+	SET @end_time = GETDATE();
+		PRINT'>>>Loading Duration:' +CAST(DATEDIFF(second,@start_time,@end_time)AS NVARCHAR) +'seconds';
+
+	SET @start_time = GETDATE();
+		PRINT'>>>Truncating Table: Bronze.erp_PX_CAT_G1V2';
+
+			TRUNCATE TABLE Bronze.erp_PX_CAT_G1V2
+
+		PRINT'>>>Inserting Data Into Table: Bronze.erp_PX_CAT_G1V2';
+
+			BULK INSERT Bronze.erp_PX_CAT_G1V2
+			FROM 'D:\Desktop_SD_new\SQL_Warehouse_Project\sql-data-warehouse-project-main\datasets\source_erp\PX_CAT_G1V2.csv '
+			WITH (
+				FIRSTROW=2,
+				FIELDTERMINATOR= ',',
+				TABLOCK
+				);
+	SET @end_time = GETDATE();
+		PRINT'>>>Loading Duration:' +CAST(DATEDIFF(second,@start_time,@end_time)AS NVARCHAR) +'seconds';
+	
+	SET @end_batch_time = GETDATE();
+		PRINT'>>>Loading Duration of Whole Batch:' +CAST(DATEDIFF(second,@start_batch_time,@end_batch_time)AS NVARCHAR) +'seconds';
+
+	END TRY
+	BEGIN CATCH
+		PRINT'====================================================';
+		PRINT'An Error Occured During The Loading Of Bronze Layer';
+		PRINT 'Error Message' + ':' + ERROR_MESSAGE();
+        PRINT 'Error Number' + ':' + CAST(ERROR_NUMBER() AS NVARCHAR);
+		PRINT 'Error State' + ':' + CAST(ERROR_STATE() AS NVARCHAR); 
+		PRINT'====================================================';
+	END CATCH
+END
