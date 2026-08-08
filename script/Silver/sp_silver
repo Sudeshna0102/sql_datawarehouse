@@ -7,7 +7,7 @@ Purpose: The purpose of this stored procedure is to take date
 from the Bronze Layer into the Silver Layer after the data is
 Cleaned, Normalised, Standardised and Treated for Nulls and Empty
 Spaces.
-
+Usage: EXEC Silver.load_ini
 */
 --We will store the following segment in a stored procedure because 
 --they wil be frequently used
