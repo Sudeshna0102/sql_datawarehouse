@@ -1,0 +1,87 @@
+/* 
+======================================
+Creating The Gold Layer
+======================================
+
+Purpose: The purpose of this script is create the final layer of the Data Warehouse which is the Gold Layer.
+The layers makes use of the data from the silver layer and create two dimensions tables for customers and products
+and one fact table for the sales in the for of Views. */
+
+
+
+--------------------------------------------------------
+ /* Creating View For Customer Dimension Table */
+--------------------------------------------------------
+
+
+-- Joining with Silver.erp_CUST_AZ12 and Silver.erp_LOC_A101 and creating view
+CREATE VIEW Gold_view_dimcustomer AS
+SELECT
+ROW_NUMBER() OVER (ORDER BY cst_id) AS Customer_surkey,
+	ci.cst_id AS Customer_ID,
+	ci.cst_key AS Customer_Number,
+	ci.cst_firstname AS First_Name,
+	ci.cst_lastname AS Last_Name,
+	ci.cst_marital_status AS Marital_Status,
+CASE WHEN ci.cst_gndr!='n/a' THEN ci.cst_gndr
+ELSE COALESCE(ca.gen,'n/a')
+END AS Gender,
+	ci.cst_create_date AS Create_Date,
+	ca.bdate AS Birthday,
+	la.cntry AS Country
+FROM Silver.crm_cust_info ci
+LEFT JOIN Silver.erp_CUST_AZ12 ca
+ON ci.cst_key = ca.cid
+LEFT JOIN Silver.erp_LOC_A101 la
+ON ci.cst_key = la.cid
+
+--------------------------------------------------------
+ /* Creating View For Product Dimension Table */
+--------------------------------------------------------
+
+-- Joining with Silver.erp_PX_CAT_G1V2 and creating view
+DROP VIEW Gold_view_dimproduct 
+CREATE VIEW Gold_view_dimproduct AS
+SELECT 
+	ROW_NUMBER()OVER(ORDER BY pn.prd_start_dt, pn.prd_key) AS product_surkey,
+	pn.prd_id AS product_id,
+	pn.cat_id AS product_category_id,
+	pc.cat AS product_category,
+	pc.subcat AS product_subcategory,
+	pn.prd_key AS product_key,
+	pn.prd_nm AS product_name,
+	pn.prd_cost AS product_cost,
+	pn.prd_line AS product_line,
+	pc.maintenance AS maintenance,
+	pn.prd_start_dt AS start_dt
+FROM Silver.crm_prd_info pn
+LEFT JOIN Silver.erp_PX_CAT_G1V2 pc
+ON pn.cat_id = pc.id
+WHERE prd_end_dt IS NULL
+
+
+--------------------------------------------------------
+ /* Creating View For Fact Table */
+--------------------------------------------------------
+
+--Joining the fact table with dimension tables and creating view
+DROP VIEW Gold_view_factsales
+CREATE VIEW Gold_view_factsales AS
+SELECT
+sd.sls_ord_num AS order_Number,
+sd.sls_prd_key AS product_key,
+pr.product_surkey,
+sd.sls_cust_id AS customer_id,
+cu.Customer_surkey,
+sd.sls_order_dt AS order_date,
+sd.sls_ship_dt AS shipping_date,
+sd.sls_due_dt AS due_date,
+sd.sls_sales AS sales,
+sd.sls_quantity AS quantity,
+sls_price AS price
+FROM Silver.crm_sales_details sd
+LEFT JOIN Gold_view_dimcustomer cu
+ON sd.sls_cust_id = cu.Customer_ID
+LEFT JOIN Gold_view_dimproduct pr
+ON sd.sls_prd_key = pr.product_key
+
