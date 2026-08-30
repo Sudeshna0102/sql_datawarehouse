@@ -67,3 +67,48 @@ The transformed data is organized into **fact and dimension tables** to create a
 * Fact & Dimension Table Design
 * SQL Querying
 * Data Quality Management
+
+
+## 📂 Repository Structure
+
+```text
+SQL-Data-Warehouse/
+│
+├── 📁 datasets/
+│   ├── CUST_AZ12.csv
+│   ├── LOC_A101.csv
+│   ├── PX_CAT_G1V2.csv
+│   ├── cust_info.csv
+│   ├── prd_info.csv
+│   └── sales_details.csv
+│
+├── 📁 docs/
+│   ├── Data_Archetecture.pdf
+│   ├── Data_flow.pdf
+│   ├── Data_integration.pdf
+│   └── Data_modelling.pdf
+│
+├── 📁 script/
+│   ├── 📁 Bronze/
+│   ├── 📁 Silver/
+│   ├── 📁 Golden/
+│   └── DataWarehouse_initiate
+│
+├── 📁 test/
+│
+├── Data_integration.pdf
+├── LICENSE
+└── README.md
+```
+
+### 📁 Folder Overview
+
+| Folder             | Description                                                                                                 |
+| ------------------ | ----------------------------------------------------------------------------------------------------------- |
+| **datasets/**      | Contains the source ERP and CRM CSV datasets used for the project.                                          |
+| **docs/**          | Contains documentation and diagrams for the data architecture, data flow, data integration, and data model. |
+| **script/Bronze/** | Contains SQL scripts for loading raw source data into the Bronze layer.                                     |
+| **script/Silver/** | Contains SQL scripts for cleaning, standardizing, and transforming the data.                                |
+| **script/Golden/** | Contains SQL scripts for creating analysis-ready fact and dimension tables.                                 |
+| **test/**          | Contains SQL scripts used for data quality checks and validation.                                           |
+
