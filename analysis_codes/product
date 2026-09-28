@@ -1,0 +1,93 @@
+/*
+======================================
+Product Report
+======================================
+Purpose: This report consolidates key product metrics and behaviour
+
+Highlight: 
+1. Gathers essential fields such as product name, category, subcategory and cost details.
+2. Segments products into categories based on performance (High, Mid and Low) and cost
+3. Aggregates product-level metrics:
+		- total orders
+		- total sales
+		- total quantity sold
+		- total unique customers
+		- span (in months)
+4. Calculate valuable KPIs:
+		- recovery (months since last order)
+		- average order revenue
+		- average monthly revenue
+=======================================
+*/
+DROP VIEW Gold.report_view_product
+CREATE VIEW Gold.report_view_product AS
+WITH cte_base_query AS(
+--CTE for Transformation
+SELECT 
+f.product_key,
+f.order_date,
+f.shipping_date,
+f.due_date,
+f.sales,
+f.quantity,
+f.price,
+f.order_number,
+f.Customer_surkey,
+p.product_surkey,
+p.product_name,
+p.product_category,
+p.product_subcategory,
+p.product_cost
+FROM Gold_view_factsales f
+LEFT JOIN Gold_view_dimproduct p
+ON p.product_surkey=f.product_surkey
+WHERE f.order_date IS NOT NULL
+)
+, cte_product_aggregation AS(
+--CTE for aggregates
+SELECT 
+product_surkey,
+product_name,
+product_category,
+product_subcategory,
+product_cost,
+COUNT(DISTINCT order_number)AS total_orders,
+SUM(sales) AS total_sales,
+SUM(quantity) AS total_quantity,
+COUNT(DISTINCT customer_surkey) AS total_unique_customer,
+MAX(order_date) AS last_order_date, 
+DATEDIFF(month, MIN(order_date), MAX(order_date)) AS Span
+FROM cte_base_query
+GROUP BY product_surkey,
+product_name,
+product_category,
+product_subcategory,
+product_cost
+)
+,cte_partiontion AS(
+--CTE for categorization
+SELECT 
+product_surkey,
+product_name,
+product_category,
+product_subcategory,
+product_cost,
+DATEDIFF(Day, last_order_date, GETDATE()) AS recency,
+CASE WHEN product_cost<500 THEN 'Below 500'
+     WHEN product_cost BETWEEN 500 AND 1000 THEN '500-1000'
+     ELSE '>1000'
+END cost_category,
+CASE WHEN total_sales > 50000 THEN 'High-Performer'
+	 WHEN total_sales >=10000 THEN 'Mid-Performer'
+	 ELSE 'Low Performer'
+END performance_category,
+total_orders,
+total_sales,
+total_quantity,
+total_unique_customer,
+last_order_date, 
+Span
+FROM cte_product_aggregation
+)
+SELECT*
+FROM Gold.report_view_product
